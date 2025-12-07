@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Optional: Neobrutalism is often better in light mode for the stark contrast, but we can support dark.
+       Let's stick to the prompt's "indigo and navy" which works well on light.
+       We can override dark mode if needed, but for now let's keep it simple or strictly light mode for the specific aesthetic unless requested.
+       Actually, user asked for "neobrutalist + Bauhaus", usually high contrast.
+    */
+    --background: #ffffff; /* Enforcing light mode for now to ensure the style hits correctly, or we can add a dark mode later */
+    --foreground: #171717;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Global Border Utility for Neobrutalism */
+.border-neo {
+    border: 3px solid #000000;
+}
