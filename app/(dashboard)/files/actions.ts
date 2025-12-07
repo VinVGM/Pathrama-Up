@@ -55,9 +55,19 @@ export async function checkRestoreStatus(fileKey: string) {
     try {
         const response = await s3.send(command)
         // Header x-amz-restore: ongoing-request="true" (restoring) or ongoing-request="false", expiry-date="..." (restored)
-        return { restoreHeader: response.Restore } 
-    } catch (e) {
-        return { restoreHeader: null }
+        const restoreHeader = response.Restore
+        
+        if (!restoreHeader) return { status: 'NOT_REQUESTED' }
+        
+        if (restoreHeader.includes('ongoing-request="true"')) {
+            return { status: 'RESTORING' }
+        } else if (restoreHeader.includes('ongoing-request="false"')) {
+            return { status: 'RESTORED', expiry: response.Restore }
+        }
+        
+        return { status: 'UNKNOWN' }
+    } catch (e: any) {
+        return { status: 'ERROR', message: e.message }
     }
 }
 

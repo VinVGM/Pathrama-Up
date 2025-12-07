@@ -42,7 +42,7 @@ export default function UploadPage() {
             setUploadProgress(prev => ({ ...prev, [file.name]: 'Starting...' }))
             
             // 1. Get Presigned URL
-            const { signedUrl, fileKey } = await getPresignedUploadUrl(file.name, file.type)
+            const { signedUrl, fileKey } = await getPresignedUploadUrl(file.name, file.type, file.size)
             
             // 2. Upload to S3
             setUploadProgress(prev => ({ ...prev, [file.name]: 'Uploading to S3...' }))
@@ -50,7 +50,8 @@ export default function UploadPage() {
                 method: 'PUT',
                 body: file,
                 headers: {
-                    'Content-Type': file.type
+                    'Content-Type': file.type || 'application/octet-stream',
+                    // 'x-amz-storage-class': 'GLACIER' // SDK adds this to query params, sending as header causes 403
                 }
             })
 
@@ -60,9 +61,9 @@ export default function UploadPage() {
 
              setUploadProgress(prev => ({ ...prev, [file.name]: 'Done' }))
 
-        } catch (error) {
+        } catch (error: any) {
             console.error(error)
-             setUploadProgress(prev => ({ ...prev, [file.name]: 'Failed' }))
+             setUploadProgress(prev => ({ ...prev, [file.name]: error.message || 'Failed' }))
         }
     }
     
@@ -74,9 +75,20 @@ export default function UploadPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <h1 className="text-4xl font-black uppercase tracking-tighter mb-8 decoration-wavy decoration-indigo-500">
-        Upload Archives
-      </h1>
+      <div className="flex justify-between items-center mb-8 border-b-4 border-black pb-4">
+        <h1 className="text-4xl font-black uppercase tracking-tighter decoration-wavy decoration-indigo-500">
+            Upload Archives
+        </h1>
+        <form action={async () => {
+            const { checkAndFixCors } = await import('./actions')
+            await checkAndFixCors()
+            alert('CORS Updated. Try uploading again.')
+        }}>
+            <button className="text-xs bg-neutral-200 px-2 py-1 font-mono hover:bg-neutral-300">
+                FIX CORS
+            </button>
+        </form>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
         {/* Dropzone */}

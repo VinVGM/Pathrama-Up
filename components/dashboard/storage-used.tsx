@@ -5,21 +5,31 @@ export default async function StorageUsed() {
   const { data: { user } } = await supabase.auth.getUser();
 
   let used = 0;
+  let total = 100; // Default fallback
   
   if (user) {
-    const { data } = await supabase
+    const { data: files } = await supabase
       .from("files")
       .select("size")
       .eq("user_id", user.id);
       
-    if (data) {
-        used = data.reduce((acc, curr) => acc + curr.size, 0);
+    if (files) {
+        used = files.reduce((acc, curr) => acc + curr.size, 0);
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('storage_limit')
+        .eq('id', user.id)
+        .single();
+    
+    if (profile) {
+        total = parseFloat((profile.storage_limit / 1073741824).toFixed(2));
     }
   }
 
   // Convert bytes to GB
   const usedGB = parseFloat((used / (1024 * 1024 * 1024)).toFixed(2));
-  const total = 100; // GB (Hardcoded plan limit for now)
   const percentage = Math.min((usedGB / total) * 100, 100);
 
   return (

@@ -1,12 +1,22 @@
 import { signout } from "@/app/(auth)/signout/actions";
 import Link from "next/link";
 import { Folder, Home, Upload, LogOut, HardDrive } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let planName = 'Basic';
+  if (user) {
+    const { data } = await supabase.from('profiles').select('plan_name').eq('id', user.id).single();
+    if (data) planName = data.plan_name;
+  }
+
   return (
     <div className="min-h-screen flex bg-neutral-50 font-sans">
       {/* Sidebar */}
@@ -21,17 +31,18 @@ export default function DashboardLayout({
             <NavLink href="/dashboard" icon={<Home />} label="Overview" />
             <NavLink href="/upload" icon={<Upload />} label="Upload" />
             <NavLink href="/files" icon={<Folder />} label="Files" />
+            <NavLink href="/plans" icon={<HardDrive />} label="Plans" />
           </nav>
         </div>
 
         <div className="p-4 border-t-4 border-black bg-indigo-50">
            <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-indigo-700 rounded-full border-2 border-black flex items-center justify-center text-white font-bold">
-                  U
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
               <div className="flex flex-col">
                   <span className="font-bold text-sm uppercase">User</span>
-                  <span className="text-xs text-neutral-600 font-mono">Plan: Pro</span>
+                  <span className="text-xs text-neutral-600 font-mono">Plan: {planName}</span>
               </div>
            </div>
           <form action={signout}>
